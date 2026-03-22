@@ -1,28 +1,49 @@
 # Telegram Mini App — демо «личный кабинет»
 
-Небольшой публичный пример для портфолио: React + TypeScript + SCSS, интеграция с **Telegram Web Apps** через [`@twa-dev/sdk`](https://github.com/twa-dev/sdk).
+Портфолио-уровень: **React 19**, **TypeScript**, **Vite**, **SCSS modules**, **TanStack Query**, **React Router**, интеграция с [**Telegram Web Apps**](https://core.telegram.org/bots/webapps) через [`@twa-dev/sdk`](https://github.com/twa-dev/sdk).
 
-## Что внутри
+## Архитектура (слоистая)
 
-- Инициализация WebApp (`ready`, `expand`), учёт `viewportChanged`
-- Подстройка UI под **themeParams** и **colorScheme** клиента Telegram
-- **MainButton** (оплата) + `sendData` в бота (JSON-пейлоады)
-- `openLink`, заглушка сценария «нет пользователя» (если открыть не из Telegram и без мока)
-- Локальный **мок** `window.Telegram` для разработки в браузере (`src/telegram/mock.ts`)
+| Слой | Назначение |
+|------|------------|
+| `app/` | Провайдеры (Query, Error Boundary), корневой layout, маршруты |
+| `widgets/` | Составные блоки: нижняя навигация, хуки MainButton / BackButton |
+| `features/` | Экраны: кабинет, настройки, пустое состояние без пользователя |
+| `entities/` | Доменные сущности (маппинг пользователя из `initDataUnsafe`) |
+| `shared/` | API-заглушка, утилиты форматирования, UI-атомы, `useTma` |
 
-## Запуск
+Подписка на **`themeChanged`** / **`viewportChanged`** через **`useSyncExternalStore`** — UI не отстаёт от темы и вьюпорта Telegram.
+
+## Возможности
+
+- Экран **кабинета**: загрузка «данных с API» (имитация задержки), скелетоны, ошибка + **retry**
+- **MainButton**: прогресс, `sendData` в бота, отключение на время операции
+- Экран **настроек**: системная **BackButton**, в моке — переключение светлой/тёмной темы
+- **HapticFeedback** (если доступен в клиенте)
+- **Error Boundary** для необработанных ошибок React
+- Юнит-тесты (**Vitest**): форматирование, маппинг пользователя
+
+## Команды
 
 ```bash
 npm install
-npm run dev
+npm run dev      # разработка
+npm run build    # production-сборка
+npm run preview  # превью dist
+npm run test     # тесты
+npm run lint     # ESLint
 ```
 
-Сборка: `npm run build`, превью: `npm run preview`.
+## Переменные окружения
 
-## Важно
+| Переменная | Описание |
+|------------|----------|
+| `VITE_API_FAIL=1` | Симулировать ошибку `fetchCabinetProfile` (проверка UI с кнопкой «Повторить») |
 
-В демо **нет** проверки подписи `initData` на сервере — в продакшене валидация обязательна. Здесь показаны только клиентские паттерны TMA и UX кабинета.
+## Важно для продакшена
+
+Проверка подписи **`initData`** на бэкенде (HMAC) в этом репозитории **не реализована** — это сознательно клиентское демо.
 
 ## Деплой
 
-Статику из `dist/` можно отдать с HTTPS (например GitHub Pages, Cloudflare Pages, Vercel). В BotFather укажите URL мини-приложения после деплоя.
+Статика из `dist/` на HTTPS (GitHub Pages, Cloudflare Pages, Vercel). Для SPA на GitHub Pages настройте редирект на `index.html`. URL пропишите в BotFather как Web App.
